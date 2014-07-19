@@ -12,12 +12,12 @@ Element providing solution to no problem in particular.
 @status alpha
 @homepage http://polymerlabs.github.io/seed-element
 -->
-<polymer-element name="x-life" attributes="width height">
+<polymer-element name="x-life" attributes="width height geom">
 
 	<template>
 
 		<link rel="stylesheet" href="x-life.css" />
-		<canvas id='gol-container' width={{width}} height={{height}}></canvas>
+		<canvas id='gol-container' width={{width}} height={{height}} geom={{geom}}></canvas>
 
 	</template>
 
@@ -41,11 +41,90 @@ Element providing solution to no problem in particular.
 			return total;
 		};
 
+		var RectMixin = {
+			setupGrid: function() {
+				this.cols = Math.floor(this.width / this.cellSize);
+				this.rows = Math.floor(this.height / this.cellSize);
+			},
+			proximity: function(i) {
+				var c, x, y, cells = this.cells;
+				c = this.itocoord(i);
+				x = c[0]; y = c[1];
+				return [
+					cells[this.coordtoi(x-1, y-1)],
+					cells[this.coordtoi(x, y-1)],
+					cells[this.coordtoi(x+1, y-1)],
+					cells[this.coordtoi(x-1, y)],
+					cells[this.coordtoi(x+1, y)],
+					cells[this.coordtoi(x-1, y+1)],
+					cells[this.coordtoi(x, y+1)],
+					cells[this.coordtoi(x+1, y+1)]
+				]
+			},
+			paintCell: function(coord) {
+				this.ctx.fillRect(
+					coord[0]*this.cellSize, coord[1]*this.cellSize,
+					this.cellSize, this.cellSize
+				);
+			},
+
+		};
+
+		var polygon = function(ctx, x, y, radius, sides, startAngle) {
+			if (sides < 3) return;
+			ctx.beginPath();
+			var a = (Math.PI * 2)/sides;
+			ctx.save();
+			ctx.translate(x, y);
+			ctx.rotate(startAngle);
+			ctx.moveTo(radius, 0);
+			while (sides--) {
+				ctx.lineTo(radius*Math.cos(-a*sides), radius*Math.sin(-a*sides));
+			}
+			ctx.closePath();
+			ctx.fill();
+			ctx.restore();
+		};
+
+		var HexMixin = {
+			setupGrid: function() {
+				this.cols = Math.floor(this.width / (this.cellSize/Math.sqrt(3)));
+				this.rows = Math.floor(this.height / this.cellSize);
+			},
+			proximity: function(i) {
+				var c, x, y, cells = this.cells;
+				c = this.itocoord(i);
+				x = c[0]; y = c[1];
+				return [
+					cells[this.coordtoi(x-1, y-1 + (x&1))],
+					cells[this.coordtoi(x-1, y + (x&1))],
+					cells[this.coordtoi(x, y-1)],
+					cells[this.coordtoi(x, y+1)],
+					cells[this.coordtoi(x+1, y-1 + (x&1))],
+					cells[this.coordtoi(x+1, y + (x&1))]
+				];
+			},
+			paintCell: function(coord) {
+				var w = this.cellSize / Math.sqrt(3);
+
+				var x = ((coord[1]+0.5)+(coord[0]%2)*0.5)*(Math.sqrt(3)*w),
+					y = coord[0]*(3/4*w*2)+w;
+
+				polygon(this.ctx, x, y, this.cellSize/2, 6, Math.PI/2);
+			}
+		};
+
+		var mixinMap = {
+			'rect': RectMixin,
+			'hex': HexMixin
+		};
+
 		Polymer('x-life', {
 
 			width: 480,
 			height: 480,
 			cellSize: 5,
+			geom: 'rect',
 			backgroundColor: 'rgb(147,147,247)',
 
 			/**
@@ -74,35 +153,11 @@ Element providing solution to no problem in particular.
 				return [x, y];
 			},
 
-			proximity: function(i) {
-				var c, x, y, cells = this.cells;
-				c = this.itocoord(i);
-				x = c[0]; y = c[1];
-				return [
-					cells[this.coordtoi(x-1, y-1)],
-					cells[this.coordtoi(x,   y-1)],
-					cells[this.coordtoi(x+1, y-1)],
-					cells[this.coordtoi(x-1, y)],
-					cells[this.coordtoi(x+1, y)],
-					cells[this.coordtoi(x-1, y+1)],
-					cells[this.coordtoi(x,   y+1)],
-					cells[this.coordtoi(x+1, y+1)]
-				]
-			},
-
 			age: function (cell, neighbors) {
 				var neighSum = arraySum.call(neighbors);
-				console.log(neighSum);
 				if (neighSum === 2 && cell) return 1;
 				if (neighSum === 3) return 1;
 				return 0;
-			},
-
-			paintCell: function(coord) {
-				this.ctx.fillRect(
-					coord[0]*this.cellSize, coord[1]*this.cellSize,
-					this.cellSize, this.cellSize
-				);
 			},
 
 			tick: function(coord) {
@@ -135,8 +190,10 @@ Element providing solution to no problem in particular.
 				// Ready is a lifecycle callback.
 				// You can do setup work in here.
 				// More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
-				this.cols = Math.floor(this.width / this.cellSize);
-				this.rows = Math.floor(this.height / this.cellSize);
+				for (prop in mixinMap[this.geom]) {
+					this[prop] = mixinMap[this.geom][prop].bind(this);
+				}
+				this.setupGrid();
 				this.cells = new Uint8ClampedArray(this.cols * this.rows);
 				this.cells.sum = arraySum.bind(this.cells);
 				this.cells2 = new Uint8ClampedArray(this.cols * this.rows);
@@ -148,12 +205,12 @@ Element providing solution to no problem in particular.
 				this.ctx.fillRect(0, 0, this.width, this.height);
 				this.ctx.fillStyle = 'rgb(0,0,0)';
 
-				// var i=Math.ceil(this.cells.length/20);
-				// while (i--) {
-				// 	j = Math.floor(Math.random() * this.cells.length);
-				// 	this.cells[j] = 1;
-				// 	this.paintCell(this.itocoord(j));
-				// }
+				var i=Math.ceil(this.cells.length/20);
+				while (i--) {
+					j = Math.floor(Math.random() * this.cells.length);
+					this.cells[j] = 1;
+					this.paintCell(this.itocoord(j));
+				}
 
 				this.play(150);
 			},
