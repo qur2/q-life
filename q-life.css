@@ -8,3 +8,17 @@ polyfill-next-selector { content: ':host > h2'; }
 ::content h2 {
   color: blue;
 }
+
+polyfill-next-selector { content: ':host .bar'; }
+::content ol {
+  list-style-type: none;
+}
+
+polyfill-next-selector { content: ':host .bar'; }
+::content li {
+  border: 1px solig #000;
+}
+
+:host canvas {
+	cursor: crosshair;
+}

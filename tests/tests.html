@@ -6,12 +6,15 @@
 
   mocha.setup({ui: 'tdd', slow: 1000, timeout: 5000, htmlbase: ''});
 
-  // Below is a set of sample element test suites. 
+  // Below is a set of sample element test suites.
   // Replace these with your own suites of tests.
 
-  htmlSuite('x-life', function() {
-    htmlTest('x-life-basic.html');
-    htmlTest('x-life-tick.html');
+  htmlSuite('q-life', function() {
+    htmlTest('utils.html');
+    htmlTest('q-life-basic.html');
+    htmlTest('q-life-geom-square.html');
+    htmlTest('q-life-geom-hex.html');
+    htmlTest('q-life-tick.html');
   });
 
   // End sample test suites

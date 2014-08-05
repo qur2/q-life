@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+	<title>q-life</title>
+
+	<script src="../../platform/platform.js"></script>
+	<link rel="import" href="../../polymer-test-tools/tools.html">
+	<script src="../../polymer-test-tools/htmltest.js"></script>
+
+	<!-- Step 1: import the element to test -->
+	<link rel="import" href="../q-life.html">
+
+</head>
+<body>
+
+	<q-life width="50" height="25" cellSize="5"></q-life>
+
+	<script>
+
+		document.addEventListener('polymer-ready', function() {
+			// Test a property
+			var myEl = document.querySelector('q-life');
+			assert.equal(myEl.cells.length, 50);
+			assert.equal(myEl.cols, 10);
+			assert.equal(myEl.rows, 5);
+
+			assert.equal(myEl.coordtoi(0, 0), 0);
+			assert.equal(myEl.coordtoi(1, 1), 11);
+			assert.equal(myEl.coordtoi(-1, -1), 49);
+			assert.equal(myEl.coordtoi(-1, 0), 9);
+			assert.equal(myEl.coordtoi(0, -1), 40);
+			assert.equal(myEl.coordtoi(9, 4), 49);
+
+			assert.deepEqual(myEl.itocoord(0), [0, 0]);
+			assert.deepEqual(myEl.itocoord(10), [0, 1]);
+			assert.deepEqual(myEl.itocoord(11), [1, 1]);
+			assert.deepEqual(myEl.itocoord(49), [9, 4]);
+			assert.deepEqual(myEl.itocoord(9), [9, 0]);
+
+			done();
+		});
+
+	</script>
+
+</body>
+</html>

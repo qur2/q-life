@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+	<title>q-life</title>
+
+	<script src="../../platform/platform.js"></script>
+	<link rel="import" href="../../polymer-test-tools/tools.html">
+	<script src="../../polymer-test-tools/htmltest.js"></script>
+
+	<!-- Step 1: import the element to test -->
+	<link rel="import" href="../q-life.html">
+
+</head>
+<body>
+
+	<q-life width="78" height="60" cellSize="6" geom="hex"></q-life>
+
+	<script>
+
+		document.addEventListener('polymer-ready', function() {
+			// The map is configure to look like here (7x7 odd-r):
+			// http://www.redblobgames.com/grids/hexagons/#coordinates
+			var myEl = document.querySelector('q-life');
+			assert.equal(myEl.cols, 7, 'there are 7 cols');
+			assert.equal(myEl.rows, 6, 'there are 6 rows');
+			assert.equal(myEl.cells.length, 42, 'there 42 cells');
+
+			assert.deepEqual(myEl.proximity(8), [1, 2, 7, 9, 15, 16], 'proximity for odd row');
+			assert.deepEqual(myEl.proximity(16), [8, 9, 15, 17, 22, 23], 'proximity for even row');
+			assert.deepEqual(myEl.proximity(0), [41, 35, 6, 1, 13, 7], 'proximity wrap from the origin');
+			assert.deepEqual(myEl.proximity(41), [34, 28, 40, 35, 6, 0], 'proximity wrap from the end');
+
+			done();
+		});
+
+	</script>
+
+</body>
+</html>

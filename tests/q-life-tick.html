@@ -2,31 +2,31 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-	<title>x-life</title>
+	<title>q-life</title>
 
 	<script src="../../platform/platform.js"></script>
 	<link rel="import" href="../../polymer-test-tools/tools.html">
 	<script src="../../polymer-test-tools/htmltest.js"></script>
 
 	<!-- Step 1: import the element to test -->
-	<link rel="import" href="../x-life.html">
+	<link rel="import" href="../q-life.html">
 
 </head>
 <body>
 
-	<x-life width="50" height="25"></x-life>
+	<q-life width="50" height="25"></q-life>
 
 	<script>
 
 		document.addEventListener('polymer-ready', function() {
 
-			var myEl = document.querySelector('x-life');
+			var myEl = document.querySelector('q-life');
+			assert.notStrictEqual(myEl.cells, myEl.cells2, 'element has 2 separated cell arrays');
 			myEl.cells[myEl.coordtoi(2,2)] = 1;
 			myEl.cells[myEl.coordtoi(3,2)] = 1;
 			myEl.cells[myEl.coordtoi(4,2)] = 1;
-			assert.equal(myEl.cells.sum(), 3);
 			myEl.tick();
-			assert.equal(myEl.cells.sum(), 3);
+			assert.deepEqual(myEl.cells, myEl.cells2, 'all cells survived, cell arrays are identical');
 			myEl.cells[myEl.coordtoi(2,2)] = 0;
 			myEl.cells[myEl.coordtoi(3,2)] = 1;
 			myEl.cells[myEl.coordtoi(4,2)] = 0;

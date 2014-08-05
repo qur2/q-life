@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+	<title>q-life</title>
+
+	<script src="../../platform/platform.js"></script>
+	<link rel="import" href="../../polymer-test-tools/tools.html">
+	<script src="../../polymer-test-tools/htmltest.js"></script>
+
+	<!-- Step 1: import the element to test -->
+	<link rel="import" href="../utils.html">
+</head>
+<body>
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			assert.isArray(itocoord(1, 1));
+			assert.deepEqual(itocoord(1, 51, 50), [0, 50]);
+			assert.deepEqual(itocoord(50, 1, 1), [1, 0]);
+			assert.deepEqual(itocoord(50, 50, 49), [49, 0]);
+			assert.deepEqual(itocoord(50, 50, 50), [0, 1]);
+			assert.deepEqual(itocoord(50, 2, 51), [1, 1]);
+			assert.deepEqual(itocoord(50, 2, 151), [1, 1]);
+
+			assert.strictEqual(coordtoi(10, 5, 0, 0), 0);
+			assert.strictEqual(coordtoi(10, 5, 0, 0), 0);
+			assert.strictEqual(coordtoi(10, 5, 0, 1), 10);
+			assert.strictEqual(coordtoi(10, 5, 1, 0), 1);
+			assert.strictEqual(coordtoi(10, 5, 1, 1), 11);
+			assert.strictEqual(coordtoi(10, 5, -1, 0), 9, 'modulo negative x coordinate');
+			assert.strictEqual(coordtoi(10, 5, 0, -1), 40, 'modulo negative y coordinate');
+			assert.strictEqual(coordtoi(10, 5, -1, -1), 49, 'modulo negative x and y coordinates');
+
+			// assert.strictEqual(arraySum([1, 2, 3]), 6);
+
+			assert.deepEqual(arrayFill([1, 2, 3]), [0, 0, 0]);
+			assert.deepEqual(arrayFill([1, 2, 3], 1), [1, 1, 1]);
+
+			var vertices = hexVertices(10);
+			assert.closeTo(vertices[0][0], vertices[3][0], 1e-14, 'vertice 0 and 3 are x-aligned');
+			assert.closeTo(vertices[1][0], vertices[2][0], 1e-14, 'vertice 1 and 2 are x-aligned');
+			assert.closeTo(
+				vertices[1][1]-vertices[2][1],
+				vertices[5][1]-vertices[4][1],
+				1e-14, 'vertice 1 and 2, 5 and 4 are y-aligned'
+			);
+			assert.closeTo(vertices[4][0], vertices[5][0], 1e-14, 'vertice 4 and 5 are x-aligned');
+			assert.closeTo(
+				vertices[5][0]-vertices[1][0],
+				vertices[4][0]-vertices[2][0],
+				1e-14, 'vertice 5 and 1, 4 and 2 are x-aligned'
+			);
+			assert.closeTo(vertices[1][1], vertices[5][1], 1e-13, 'vertice 1 and 5 are y-aligned');
+			assert.closeTo(vertices[2][1], vertices[4][1], 1e-14, 'vertice 2 and 4 are y-aligned');
+
+			done();
+		});
+	</script>
+</body>
+</html>

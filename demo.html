@@ -2,17 +2,20 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <title>x-life Demo</title>
+  <title>q-life Demo</title>
 
   <script src="../platform/platform.js"></script>
-  <link rel="import" href="x-life.html">
+  <link rel="import" href="q-life.html">
 
 </head>
 <body unresolved>
 
   <p>An example of using <code>&lt;seed-element></code>:</p>
 
-  <x-life geom="rect"></x-life>
+  <q-life geom="rect" cellSize="6" play="true"></q-life>
+
+  <button onclick="document.querySelector('q-life').start(50);">start</button>
+  <button onclick="document.querySelector('q-life').stop();">stop</button>
 
 </body>
 </html>

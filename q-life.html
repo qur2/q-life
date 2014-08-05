@@ -1,0 +1,280 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="utils.html">
+
+<!--
+Game of life custom element. It plays a Conway's game of life in a canvas.
+The game can be customised to use different maps and rules.
+
+##### Example
+
+		<q-life></q-life>
+
+@element q-life
+@blurb Element playing a Conway's game of life in a canvas.
+@status alpha
+@homepage http://github.com/qur2/q-life
+-->
+<polymer-element name="q-life" attributes="width height geom cellSize play">
+
+	<template>
+
+		<link rel="stylesheet" href="q-life.css" />
+		<canvas id='gol-container' width={{width}} height={{height}} geom={{geom}} play={{play}}></canvas>
+
+	</template>
+
+	<script>
+		var RectMixin = {
+			setupGrid: function() {
+				this.cols = Math.floor(this.width / this.cellSize);
+				this.rows = Math.floor(this.height / this.cellSize);
+				this.vertices = utils.squareVertices(this.cellSize);
+				var size = this.cols * this.rows;
+				this.wrapCoord = function(i) {
+					return (i + size) % size;
+				}
+			},
+			proximity: function(i) {
+				var c, x, y;
+				c = this.itocoord(i);
+				x = c[0]; y = c[1];
+				return [
+					this.coordtoi(x-1, y-1),
+					this.coordtoi(x, y-1),
+					this.coordtoi(x+1, y-1),
+					this.coordtoi(x-1, y),
+					this.coordtoi(x+1, y),
+					this.coordtoi(x-1, y+1),
+					this.coordtoi(x, y+1),
+					this.coordtoi(x+1, y+1),
+				]
+			},
+			paintCell: function(coord, color) {
+				if (undefined != color) {
+					this.ctx.fillStyle = color;
+				}
+				utils.drawShape(this.ctx, coord[0]*this.cellSize, coord[1]*this.cellSize, this.vertices);
+			},
+			pixtoi: function(x, y) {
+				return this.coordtoi(Math.ceil(x/this.cellSize), Math.ceil(y/this.cellSize));
+			},
+		};
+
+		var SQRT3 = Math.sqrt(3);
+
+		/**
+		 * Implements map specific stuff for a hexagonal tiling.
+		 * The map uses axial coordinates and has a "odd-r" horizontal layout.
+		 *
+		 * @see http://www.redblobgames.com/grids/hexagons/
+		 */
+		var HexMixin = {
+			setupGrid: function() {
+				// cellSize is the height of the hexagon, radius is cellSize/2
+				this.vertices = utils.hexVertices(this.cellSize);
+				this.hexh = 3 * this.cellSize/2;
+				this.hexw = SQRT3 * this.cellSize;
+				this.cols = Math.floor(this.width / this.hexw);
+				this.rows = Math.floor(this.height / this.hexh);
+			},
+
+			/**
+			 * Gets the neighbours for a given cell. If uses
+			 * `itocoord` and `coordtoi` in order to connect the edges of the grid
+			 * (like a torus).
+			 * Beware that for an hexagonal grid, the number of rows
+			 * should be even. If not, the torus is somehow degenerated:
+			 * the result for cells at the border of the grid will be incorrect.
+			 */
+			proximity: function(i) {
+				var c, x, y, odd;
+				c = this.itocoord(i);
+				x = c[0]; y = c[1];
+				odd = y%2;
+				return [
+					this.coordtoi(x-1+odd, y-1),
+					this.coordtoi(x+odd, y-1),
+					this.coordtoi(x-1, y),
+					this.coordtoi(x+1, y),
+					this.coordtoi(x-1+odd, y+1),
+					this.coordtoi(x+odd, y+1),
+				];
+			},
+
+			paintCell: function(coord) {
+				utils.drawShape(
+					this.ctx,
+					(coord[0] + (coord[1]%2)*.5) * this.hexw,
+					coord[1]*this.hexh,
+					this.vertices
+				);
+			},
+
+			/**
+			 * Find the hexagon at the given (x, y) screen coordinates.
+			 * (0, 0) is the top-left point of the hexagon map.
+			 *
+			 * @see http://www.redblobgames.com/grids/hexagons/#comment-1063818420n
+			 *
+			 * @method pixtocoord
+			 * @param {int} The screen x-coordinate.
+			 * @param {int} The screen y-coordinate.
+			 * @return {int} The axial coordinates.
+			 */
+			pixtocoord: function(x, y) {
+				x = (x - this.hexw/2) / this.hexw;
+				var t1 = y / (this.cellSize), t2 = Math.floor(x + t1);
+				var r = Math.floor((Math.floor(t1 - x) + t2) / 3);
+				var q = Math.floor((Math.floor(2 * x + 1) + t2) / 3) - Math.floor(r/2) - r%2;
+				return [q, r];
+			},
+			pixtoi: function(x, y) {
+				return this.coordtoi.apply(this, this.pixtocoord(x, y));
+			}
+		};
+
+		var mixinMap = {
+			'rect': RectMixin,
+			'hex': HexMixin
+		};
+
+		/**
+		 * @see http://stackoverflow.com/questions/12772943/getting-cursor-position-in-a-canvas-without-jquery
+		 */
+		function getMousePos(canvas, evt) {
+			var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+
+			// return relative mouse position
+			var mouseX = evt.clientX - rect.left - root.scrollLeft;
+			var mouseY = evt.clientY - rect.top - root.scrollTop;
+			return {
+				x: mouseX,
+				y: mouseY
+			};
+		}
+
+		Polymer('q-life', {
+
+			width: 480,
+			height: 480,
+			cellSize: 6,
+			play: false,
+			geom: 'rect',
+			states: ['rgb(255,125,255)', 'rgb(0,0,0)'],
+
+			age: function (cell, neighbors) {
+				var sum = 0, n = neighbors.length;
+				while (n--) {
+					sum += this.cells[neighbors[n]];
+				}
+				if (sum === 2 && cell) return 1;
+				if (sum === 3) return 1;
+				return 0;
+			},
+
+			tick: function(coord) {
+				this.ctx.fillStyle = this.states[0];
+				this.ctx.fillRect(0, 0, this.width, this.height);
+				this.ctx.fillStyle = this.states[1];
+				var cells = this.cells,
+					cells2 = this.cells2,
+					i = cells.length;
+				while (i--) {
+					neighs = this.proximity(i);
+					cells2[i] = this.age(cells[i], neighs);
+					if (cells2[i]) {
+						this.paintCell(this.itocoord(i));
+					}
+				}
+				this.cells = cells2;
+				this.cells2 = cells;
+			},
+
+			ready: function() {
+				// Ready is a lifecycle callback.
+				// You can do setup work in here.
+				// More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
+				for (prop in mixinMap[this.geom]) {
+					this[prop] = mixinMap[this.geom][prop].bind(this);
+				}
+				this.setupGrid();
+				this.itocoord = utils.itocoord.bind(this, this.cols, this.rows);
+				this.coordtoi = utils.coordtoi.bind(this, this.cols, this.rows);
+				this.cells = new Uint8ClampedArray(this.cols * this.rows);
+				this.cells2 = new Uint8ClampedArray(this.cols * this.rows);
+				utils.arrayFill(this.cells, this.cols * this.rows);
+				var canvas = this.$["gol-container"];
+				this.ctx = canvas.getContext("2d");
+				this.ctx.fillStyle = this.states[0];
+				this.ctx.fillRect(0, 0, this.width, this.height);
+				this.ctx.fillStyle = this.states[1];
+				// var i=Math.ceil(this.cells.length/20), c;
+				// while (i--) {
+				// 	c = Math.floor(Math.random()*this.cells.length);
+				// 	this.cells[c] = 1;
+				// 	this.paintCell(this.itocoord(c));
+				// }
+				if (this.play) {
+					this.start(50);
+				}
+			},
+
+			domReady: function() {
+				var canvas = this.$["gol-container"];
+				var self = this;
+				canvas.addEventListener('click', function(evt) {
+					var mousePos = getMousePos(canvas, evt);
+					var i = self.pixtoi(mousePos.x, mousePos.y);
+					self.cells[i] = !self.cells[i];
+					self.paintCell(self.itocoord(i), self.states[self.cells[i]]);
+					// var n = self.proximity(i), m=6;
+					// while(m--) {
+					// 	var j = n[m];
+					// 	self.cells[j] = !self.cells[j];
+					// 	self.paintCell(self.itocoord(j), self.states[self.cells[j]]);
+					// }
+					// var message = "Mouse position: " + mousePos.x + "," + mousePos.y;
+					// console.log(mousePos, self.pixtoi(mousePos.x, mousePos.y));
+				}, false);
+				canvas.addEventListener("mousemove", function (evt) {
+					var mousePos = getMousePos(canvas, evt);
+					var i = self.pixtoi(mousePos.x, mousePos.y);
+					self.cells[i] = !self.cells[i];
+					self.paintCell(self.itocoord(i), self.states[self.cells[i]]);
+				}, false);
+			},
+
+			/**
+			 * Starts the game.
+			 *
+			 * @method start
+			 * @param {int} The frequency of the timer, in ms.
+			 * @return {Object} The q-life instance.
+			 */
+			start: function(freq) {
+				if (!this.clock) {
+					this.clock = setInterval(this.tick.bind(this), freq);
+					this.play = true;
+				}
+				return this;
+			},
+
+			/**
+			 * Stops the game.
+			 *
+			 * @method stop
+			 * @return {Object} The q-life instance.
+			 */
+			stop: function() {
+				if (this.clock) {
+					window.clearInterval(this.clock);
+					this.clock = null;
+					this.play = false;
+				}
+				return this;
+			},
+		});
+
+	</script>
+
+</polymer-element>

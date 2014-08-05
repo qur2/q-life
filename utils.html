@@ -1,0 +1,130 @@
+<script>
+/**
+ * Computes 1D index to 2D coordinates.
+ *
+ * @method coordtoi
+ * @param {int} The number of columns in the 2D space.
+ * @param {int} The 1D index.
+ * @return {Array} [x, y] the 2D-coordinates.
+ */
+function itocoord(cols, rows, i) {
+	return [i % cols, Math.floor(i / cols) % rows];
+}
+
+/**
+ * Computes 2D coordinates to 1D index.
+ * The 2D space is considered a torus and
+ * negative coordinates may be used.
+ *
+ * @method coordtoi
+ * @param {int} The number of columns in the 2D space.
+ * @param {int} The number of rows in the 2D space.
+ * @param {int} The x-coordinate.
+ * @param {int} The y-coordinate.
+ * @return {int} The 1D index.
+ */
+function coordtoi(cols, rows, x, y) {
+	return (((y+rows) % rows) * cols) + ((x+cols) % cols);
+}
+
+/**
+ * Helper function to sum the elements of an array.
+ * Bind an array to it and call `array.sum()` or call
+ * it directly with `array.call(array)`.
+ * Provided as an alternative to modifying prototypes
+ * or subclassing native types.
+ *
+ * @function arraySum
+ * @param {Array} The array which elements need to be summed.
+ * @return {Number} The sum of the array elements.
+ */
+// var arraySum = function(arr) {
+// 	var total = 0;
+// 	var i = arr.length;
+// 	while (i--) {
+// 		total += arr[i];
+// 	}
+// 	return total;
+// };
+
+var arrayFill = function(arr, fill) {
+	fill || (fill = 0);
+	var i = arr.length;
+	while (i--) {
+		arr[i] = fill;
+	}
+	return arr;
+};
+// var arrayGet = function(arr, index) {
+// 	return arr[index];
+// };
+
+var drawRectangle = function(ctx, x, y, w, h) {
+	ctx.fillRect(x*w, y*h, x, h);
+	return ctx;
+};
+
+var SQRT3 = Math.sqrt(3),
+	PIHALF = Math.PI/2,
+	PI2 = Math.PI*2;
+
+/**
+ * Produces vertices coordinate for an hexagon in the following order:
+ * o  1
+ * 2     6
+ * 3     5
+ *    4
+ * where o is the origin.
+ *
+ * @see http://www.redblobgames.com/grids/hexagons/#basics
+ *
+ * @function arraySum
+ * @param {int} The radius of the circumscribed circle.
+ * @return {Array} 6 vertices coordinates, from top-most in trigonometric order.
+ */
+var hexVertices = function(radius) {
+	var sides = i = 6,
+		angle,
+		vertices = [];
+	while (i--) {
+		// side-i is to generate the vertices in the expected order
+		angle = PI2 / sides * (sides-i + .5);
+
+		vertices.push([
+			SQRT3/2*radius + radius*Math.cos(angle),
+			radius + radius*Math.sin(angle)
+		]);
+	}
+	return vertices;
+};
+var squareVertices = function(edge) {
+	return [[0, edge], [0, 0], [edge, 0], [edge, edge]];
+};
+
+var drawShape = function(ctx, x, y, vertices) {
+	var i = vertices.length-1;
+	ctx.save();
+	ctx.translate(x, y);
+	ctx.beginPath();
+	ctx.moveTo(vertices[i][0], vertices[i][1]);
+	while (i--) {
+		ctx.lineTo(vertices[i][0], vertices[i][1]);
+	}
+	ctx.closePath();
+	ctx.fill();
+	ctx.restore();
+	return ctx;
+}
+
+window.utils = {
+	itocoord: itocoord,
+	coordtoi: coordtoi,
+	arrayFill: arrayFill,
+	hexVertices: hexVertices,
+	squareVertices: squareVertices,
+	drawShape: drawShape,
+	SQRT3: SQRT3
+};
+
+hexGeom = {};
+</script>
