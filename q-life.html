@@ -219,28 +219,39 @@ The game can be customised to use different maps and rules.
 				}
 			},
 
+			setAt: function(mousePos) {
+				var i = this.pixtoi(mousePos.x, mousePos.y);
+				this.cells[i] = !this.cells[i];
+				this.paintCell(this.itocoord(i), this.states[this.cells[i]]);
+			},
+
 			domReady: function() {
 				var canvas = this.$["gol-container"];
 				var self = this;
-				canvas.addEventListener('click', function(evt) {
-					var mousePos = getMousePos(canvas, evt);
-					var i = self.pixtoi(mousePos.x, mousePos.y);
-					self.cells[i] = !self.cells[i];
-					self.paintCell(self.itocoord(i), self.states[self.cells[i]]);
-					// var n = self.proximity(i), m=6;
-					// while(m--) {
-					// 	var j = n[m];
-					// 	self.cells[j] = !self.cells[j];
-					// 	self.paintCell(self.itocoord(j), self.states[self.cells[j]]);
-					// }
-					// var message = "Mouse position: " + mousePos.x + "," + mousePos.y;
-					// console.log(mousePos, self.pixtoi(mousePos.x, mousePos.y));
+				function mouseSetAt(evt) {
+					self.setAt.call(self, getMousePos(canvas, evt));
+				};
+				canvas.addEventListener('click', mouseSetAt, false);
+				// canvas.addEventListener('click', function(evt) {
+				// 	var mousePos = getMousePos(canvas, evt);
+				// 	self.setAt(mousePos);
+				// 	// var n = self.proximity(i), m=6;
+				// 	// while(m--) {
+				// 	// 	var j = n[m];
+				// 	// 	self.cells[j] = !self.cells[j];
+				// 	// 	self.paintCell(self.itocoord(j), self.states[self.cells[j]]);
+				// 	// }
+				// 	// var message = "Mouse position: " + mousePos.x + "," + mousePos.y;
+				// 	// console.log(mousePos, self.pixtoi(mousePos.x, mousePos.y));
+				// }, false);
+				canvas.addEventListener("mousedown", function (evt) {
+					canvas.addEventListener("mousemove", mouseSetAt, false);
 				}, false);
-				canvas.addEventListener("mousemove", function (evt) {
-					var mousePos = getMousePos(canvas, evt);
-					var i = self.pixtoi(mousePos.x, mousePos.y);
-					self.cells[i] = !self.cells[i];
-					self.paintCell(self.itocoord(i), self.states[self.cells[i]]);
+				canvas.addEventListener("mouseup", function (evt) {
+					canvas.removeEventListener("mousemove", mouseSetAt, false);
+				}, false);
+				canvas.addEventListener("mouseout", function (evt) {
+					canvas.removeEventListener("mousemove", mouseSetAt, false);
 				}, false);
 			},
 
