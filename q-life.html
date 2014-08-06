@@ -143,14 +143,10 @@ The game can be customised to use different maps and rules.
 		 */
 		function getMousePos(canvas, evt) {
 			var rect = canvas.getBoundingClientRect(), root = document.documentElement;
-
-			// return relative mouse position
-			var mouseX = evt.clientX - rect.left - root.scrollLeft;
-			var mouseY = evt.clientY - rect.top - root.scrollTop;
-			return {
-				x: mouseX,
-				y: mouseY
-			};
+			return [
+				evt.clientX - rect.left - root.scrollLeft,
+				evt.clientY - rect.top - root.scrollTop
+			];
 		}
 
 		Polymer('q-life', {
@@ -220,7 +216,7 @@ The game can be customised to use different maps and rules.
 			},
 
 			setAt: function(mousePos) {
-				var i = this.pixtoi(mousePos.x, mousePos.y);
+				var i = this.pixtoi.apply(this, mousePos);
 				this.cells[i] = !this.cells[i];
 				this.paintCell(this.itocoord(i), this.states[this.cells[i]]);
 			},
@@ -241,8 +237,8 @@ The game can be customised to use different maps and rules.
 				// 	// 	self.cells[j] = !self.cells[j];
 				// 	// 	self.paintCell(self.itocoord(j), self.states[self.cells[j]]);
 				// 	// }
-				// 	// var message = "Mouse position: " + mousePos.x + "," + mousePos.y;
-				// 	// console.log(mousePos, self.pixtoi(mousePos.x, mousePos.y));
+				// 	// var message = "Mouse position: " + mousePos[0] + "[1] + mousePos.y;
+				// 	// console.log(mousePos, self.pixtoi(mousePos[0], mousePos[1]));
 				// }, false);
 				canvas.addEventListener("mousedown", function (evt) {
 					canvas.addEventListener("mousemove", mouseSetAt, false);
