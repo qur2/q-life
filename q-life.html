@@ -198,7 +198,7 @@ The game can be customised to use different maps and rules.
 				this.coordtoi = utils.coordtoi.bind(this, this.cols, this.rows);
 				this.cells = new Uint8ClampedArray(this.cols * this.rows);
 				this.cells2 = new Uint8ClampedArray(this.cols * this.rows);
-				utils.arrayFill(this.cells, this.cols * this.rows);
+				utils.arrayFill(this.cells);
 				var canvas = this.$["gol-container"];
 				this.ctx = canvas.getContext("2d");
 				this.ctx.fillStyle = this.states[0];

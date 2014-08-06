@@ -14,7 +14,7 @@
 </head>
 <body>
 
-	<q-life width="50" height="25"></q-life>
+	<q-life width="50" height="25" cellSize="5"></q-life>
 
 	<script>
 
@@ -24,16 +24,18 @@
 			assert.notStrictEqual(myEl.cells, myEl.cells2, 'element has 2 separated cell arrays');
 			myEl.cells[myEl.coordtoi(2,2)] = 1;
 			myEl.cells[myEl.coordtoi(3,2)] = 1;
-			myEl.cells[myEl.coordtoi(4,2)] = 1;
+			myEl.cells[myEl.coordtoi(1,3)] = 1;
+			myEl.cells[myEl.coordtoi(2,4)] = 1;
+			myEl.cells[myEl.coordtoi(3,4)] = 1;
+			myEl.cells[myEl.coordtoi(4,3)] = 1;
+			//  oo
+			// o  o  This shape is a beehive and is stable.
+			//  oo
 			myEl.tick();
 			assert.deepEqual(myEl.cells, myEl.cells2, 'all cells survived, cell arrays are identical');
-			myEl.cells[myEl.coordtoi(2,2)] = 0;
-			myEl.cells[myEl.coordtoi(3,2)] = 1;
-			myEl.cells[myEl.coordtoi(4,2)] = 0;
-			myEl.cells[myEl.coordtoi(3,1)] = 1;
-			myEl.cells[myEl.coordtoi(3,3)] = 1;
 
 			done();
+
 		});
 
 	</script>
