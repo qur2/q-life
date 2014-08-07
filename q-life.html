@@ -14,12 +14,12 @@ The game can be customised to use different maps and rules.
 @status alpha
 @homepage http://github.com/qur2/q-life
 -->
-<polymer-element name="q-life" attributes="width height geom cellSize play">
+<polymer-element name="q-life" attributes="width height game cellSize play">
 
 	<template>
 
 		<link rel="stylesheet" href="q-life.css" />
-		<canvas id='gol-container' width={{width}} height={{height}} geom={{geom}} play={{play}}></canvas>
+		<canvas id='gol-container' width={{width}} height={{height}} play={{play}}></canvas>
 
 	</template>
 
@@ -47,7 +47,17 @@ The game can be customised to use different maps and rules.
 					this.coordtoi(x-1, y+1),
 					this.coordtoi(x, y+1),
 					this.coordtoi(x+1, y+1),
-				]
+				];
+			},
+			age: function (i, neighbors) {
+				var sum = 0,
+					n = neighbors.length;
+				while (n--) {
+					sum += this.cells[neighbors[n]];
+				}
+				if (sum === 2 && this.cells[i]) return 1;
+				if (sum === 3) return 1;
+				return 0;
 			},
 			paintCell: function(coord, color) {
 				if (undefined != color) {
@@ -60,8 +70,6 @@ The game can be customised to use different maps and rules.
 			},
 		};
 
-		var SQRT3 = Math.sqrt(3);
-
 		/**
 		 * Implements map specific stuff for a hexagonal tiling.
 		 * The map uses axial coordinates and has a "odd-r" horizontal layout.
@@ -73,9 +81,41 @@ The game can be customised to use different maps and rules.
 				// cellSize is the height of the hexagon, radius is cellSize/2
 				this.vertices = utils.hexVertices(this.cellSize);
 				this.hexh = 3 * this.cellSize/2;
-				this.hexw = SQRT3 * this.cellSize;
+				this.hexw = Math.sqrt(3) * this.cellSize;
 				this.cols = Math.floor(this.width / this.hexw);
 				this.rows = Math.floor(this.height / this.hexh);
+			},
+
+			/**
+			 * Find the hexagon at the given (x, y) screen coordinates.
+			 * (0, 0) is the top-left point of the hexagon map.
+			 *
+			 * @see http://www.redblobgames.com/grids/hexagons/#comment-1063818420n
+			 *
+			 * @method pixtocoord
+			 * @param {int} The screen x-coordinate.
+			 * @param {int} The screen y-coordinate.
+			 * @return {int} The axial coordinates.
+			 */
+			pixtocoord: function(x, y) {
+				x = (x - this.hexw/2) / this.hexw;
+				var t1 = y / (this.cellSize), t2 = Math.floor(x + t1);
+				var r = Math.floor((Math.floor(t1 - x) + t2) / 3);
+				var q = Math.floor((Math.floor(2 * x + 1) + t2) / 3) - Math.floor(r/2) - r%2;
+				return [q, r];
+			},
+
+			pixtoi: function(x, y) {
+				return this.coordtoi.apply(this, this.pixtocoord(x, y));
+			},
+
+			paintCell: function(coord) {
+				utils.drawShape(
+					this.ctx,
+					(coord[0] + (coord[1]%2)*.5) * this.hexw,
+					coord[1]*this.hexh,
+					this.vertices
+				);
 			},
 
 			/**
@@ -101,41 +141,63 @@ The game can be customised to use different maps and rules.
 				];
 			},
 
-			paintCell: function(coord) {
-				utils.drawShape(
-					this.ctx,
-					(coord[0] + (coord[1]%2)*.5) * this.hexw,
-					coord[1]*this.hexh,
-					this.vertices
-				);
+			age: RectMixin.age,
+		};
+
+		var HexDenseMixin = {
+			setupGrid: HexMixin.setupGrid,
+			pixtocoord: HexMixin.pixtocoord,
+			pixtoi: HexMixin.pixtoi,
+			paintCell: HexMixin.paintCell,
+
+			proximity: function(i) {
+				var c, x, y, odd, p;
+				c = this.itocoord(i);
+				x = c[0]; y = c[1];
+				odd = y%2;
+				return [
+					this.coordtoi(x-1+odd, y-1),
+					this.coordtoi(x+odd, y-1),
+					this.coordtoi(x-1, y),
+					this.coordtoi(x+1, y),
+					this.coordtoi(x-1+odd, y+1),
+					this.coordtoi(x+odd, y+1),
+
+					this.coordtoi(x, y-2),
+					this.coordtoi(x-2+odd, y-1),
+					this.coordtoi(x+1+odd, y-1),
+					this.coordtoi(x-2+odd, y+1),
+					this.coordtoi(x+1+odd, y+1),
+					this.coordtoi(x, y+2),
+				];
 			},
 
 			/**
-			 * Find the hexagon at the given (x, y) screen coordinates.
-			 * (0, 0) is the top-left point of the hexagon map.
-			 *
-			 * @see http://www.redblobgames.com/grids/hexagons/#comment-1063818420n
-			 *
-			 * @method pixtocoord
-			 * @param {int} The screen x-coordinate.
-			 * @param {int} The screen y-coordinate.
-			 * @return {int} The axial coordinates.
+			 * @see http://www.well.com/~dgb/hexrules.html
 			 */
-			pixtocoord: function(x, y) {
-				x = (x - this.hexw/2) / this.hexw;
-				var t1 = y / (this.cellSize), t2 = Math.floor(x + t1);
-				var r = Math.floor((Math.floor(t1 - x) + t2) / 3);
-				var q = Math.floor((Math.floor(2 * x + 1) + t2) / 3) - Math.floor(r/2) - r%2;
-				return [q, r];
+			age: function (i, neighbors) {
+				var sum = 0,
+					n = neighbors.length / 2,
+					o = n / 20;
+				var neigh1 = neighbors.slice(0, n),
+					neigh2 = neighbors.slice(n);
+				while (n--) {
+					sum += this.cells[neigh1[n]];
+				}
+				n = neighbors.length / 2;
+				while (n--) {
+					sum += this.cells[neigh2[n]] * o;
+				}
+				if (!this.cells[i] && sum >= 2.3 && sum < 2.9) return 1;
+				if (this.cells[i] && sum >= 2 && sum < 3.3) return 1;
+				return 0;
 			},
-			pixtoi: function(x, y) {
-				return this.coordtoi.apply(this, this.pixtocoord(x, y));
-			}
 		};
 
-		var mixinMap = {
+		var gameMixins = {
 			'rect': RectMixin,
-			'hex': HexMixin
+			'hex': HexMixin,
+			'hex-dense': HexDenseMixin,
 		};
 
 		/**
@@ -161,18 +223,8 @@ The game can be customised to use different maps and rules.
 			height: 480,
 			cellSize: 6,
 			play: false,
-			geom: 'rect',
-			states: ['rgb(255,125,255)', 'rgb(0,0,0)'],
-
-			age: function (cell, neighbors) {
-				var sum = 0, n = neighbors.length;
-				while (n--) {
-					sum += this.cells[neighbors[n]];
-				}
-				if (sum === 2 && cell) return 1;
-				if (sum === 3) return 1;
-				return 0;
-			},
+			game: 'rect',
+			states: ['rgb(250,250,250)', 'rgb(0,0,0)'],
 
 			tick: function(coord) {
 				this.ctx.fillStyle = this.states[0];
@@ -182,8 +234,8 @@ The game can be customised to use different maps and rules.
 					cells2 = this.cells2,
 					i = cells.length;
 				while (i--) {
-					neighs = this.proximity(i);
-					cells2[i] = this.age(cells[i], neighs);
+					neighbors = this.proximity(i);
+					cells2[i] = this.age(i, neighbors);
 					if (cells2[i]) {
 						this.paintCell(this.itocoord(i));
 					}
@@ -196,8 +248,8 @@ The game can be customised to use different maps and rules.
 				// Ready is a lifecycle callback.
 				// You can do setup work in here.
 				// More info: http://www.polymer-project.org/docs/polymer/polymer.html#lifecyclemethods
-				for (prop in mixinMap[this.geom]) {
-					this[prop] = mixinMap[this.geom][prop].bind(this);
+				for (prop in gameMixins[this.game]) {
+					this[prop] = gameMixins[this.game][prop].bind(this);
 				}
 				this.setupGrid();
 				this.itocoord = utils.itocoord.bind(this, this.cols, this.rows);
