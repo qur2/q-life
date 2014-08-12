@@ -14,13 +14,13 @@
 </head>
 <body>
 
-	<q-life width="50" height="25" cellSize="5"></q-life>
+	<canvas is="q-life" width="50" height="25" cellSize="5"></canvas>
 
 	<script>
 
 		document.addEventListener('polymer-ready', function() {
 
-			var myEl = document.querySelector('q-life');
+			var myEl = document.querySelector('[is=q-life]');
 			assert.notStrictEqual(myEl.cells, myEl.cells2, 'element has 2 separated cell arrays');
 			myEl.cells[myEl.coordtoi(2,2)] = 1;
 			myEl.cells[myEl.coordtoi(3,2)] = 1;

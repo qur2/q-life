@@ -12,10 +12,10 @@
 
   <p>An example of using <code>&lt;q-life></code>:</p>
 
-  <q-life game="hex-dense" cellSize="6" play="true"></q-life>
+  <canvas is="q-life" game="rect" cellSize="6"></canvas>
 
-  <button onclick="document.querySelector('q-life').start(50);">start</button>
-  <button onclick="document.querySelector('q-life').stop();">stop</button>
+  <button onclick="document.querySelector('[is=q-life]').start(50);">start</button>
+  <button onclick="document.querySelector('[is=q-life]').stop();">stop</button>
 
 </body>
 </html>

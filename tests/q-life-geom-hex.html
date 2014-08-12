@@ -14,14 +14,15 @@
 </head>
 <body>
 
-	<q-life width="78" height="60" cellSize="6" geom="hex"></q-life>
+	<canvas is="q-life" width="78" height="60" cellSize="6" geom="hex"></canvas>
 
 	<script>
 
 		document.addEventListener('polymer-ready', function() {
 			// The map is configure to look like here (7x7 odd-r):
 			// http://www.redblobgames.com/grids/hexagons/#coordinates
-			var myEl = document.querySelector('q-life');
+			var myEl = document.querySelector('[is=q-life]');
+			console.log(myEl.height, myEl.width)
 			assert.equal(myEl.cols, 7, 'there are 7 cols');
 			assert.equal(myEl.rows, 6, 'there are 6 rows');
 			assert.equal(myEl.cells.length, 42, 'there 42 cells');

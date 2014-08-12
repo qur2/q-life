@@ -7,22 +7,14 @@ The game can be customised to use different maps and rules.
 
 ##### Example
 
-		<q-life></q-life>
+		<canvas is="q-life"></canvas>
 
 @element q-life
 @blurb Element playing a Conway's game of life in a canvas.
 @status alpha
 @homepage http://github.com/qur2/q-life
 -->
-<polymer-element name="q-life" attributes="width height game cellSize play">
-
-	<template>
-
-		<link rel="stylesheet" href="q-life.css" />
-		<canvas id='gol-container' width={{width}} height={{height}} play={{play}}></canvas>
-
-	</template>
-
+<polymer-element name="q-life" attributes="game cellSize play" extends="canvas">
 	<script>
 		var RectMixin = {
 			setupGrid: function() {
@@ -219,8 +211,8 @@ The game can be customised to use different maps and rules.
 		 */
 		Polymer('q-life', {
 
-			width: 480,
-			height: 480,
+			// width: 480,
+			// height: 480,
 			cellSize: 6,
 			play: false,
 			game: 'rect',
@@ -257,20 +249,16 @@ The game can be customised to use different maps and rules.
 				this.cells = new Uint8ClampedArray(this.cols * this.rows);
 				this.cells2 = new Uint8ClampedArray(this.cols * this.rows);
 				utils.arrayFill(this.cells);
-				var canvas = this.$["gol-container"];
+				// var canvas = this.$["gol-container"];
+				var canvas = this;
 				this.ctx = canvas.getContext("2d");
 				this.ctx.fillStyle = this.states[0];
 				this.ctx.fillRect(0, 0, this.width, this.height);
 				this.ctx.fillStyle = this.states[1];
-				// var i=Math.ceil(this.cells.length/20), c;
-				// while (i--) {
-				// 	c = Math.floor(Math.random()*this.cells.length);
-				// 	this.cells[c] = 1;
-				// 	this.paintCell(this.itocoord(c));
-				// }
 				if (this.play) {
 					this.start(50);
 				}
+				this.super();
 			},
 
 			setAt: function(mousePos) {
@@ -280,7 +268,8 @@ The game can be customised to use different maps and rules.
 			},
 
 			domReady: function() {
-				var canvas = this.$["gol-container"];
+				// var canvas = this.$["gol-container"];
+				var canvas = this;
 				var self = this;
 				function mouseSetAt(evt) {
 					self.setAt.call(self, getMousePos(canvas, evt));
@@ -339,7 +328,5 @@ The game can be customised to use different maps and rules.
 				return this;
 			},
 		});
-
 	</script>
-
 </polymer-element>
